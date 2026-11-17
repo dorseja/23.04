@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Немецкий словарик — Python в браузере</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Pyodide: интерпретатор Python, работающий в браузере -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v314.0.8/full/pyodide.js"></script>
+</head>
+<body>
+
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div id="zagruzka">
+  <div class="zagruzka-kartochka">
+    <div class="spinner"></div>
+    <h2>Запускаю Python…</h2>
+    <p id="zagruzka-text">Загрузка среды Pyodide…</p>
+    <p class="podskazka">Первый запуск занимает 10–30 секунд: браузер скачивает интерпретатор Python. Потом он сохранится в кэше, и сайт будет открываться быстро.</p>
+  </div>
+</div>
+
+<header>
+  <div class="flag"><span></span><span></span><span></span></div>
+  <h1>Немецкий словарик</h1>
+  <p class="podzagolovok">Deutsch-Wörterbuch · 13 тем · 373 слова · логика на Python</p>
+  <div id="slovo-dnya" class="slovo-dnya"></div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <button class="tab active" data-tab="slovar">📖 Словарь</button>
+    <button class="tab" data-tab="test">🎯 Тест</button>
+    <button class="tab" data-tab="dobavit">➕ Добавить</button>
+    <button class="tab" data-tab="stat">📊 Статистика</button>
+    <button class="tab" data-tab="dannye">💾 Данные</button>
+    <button class="tab" data-tab="o-proekte">ℹ️ О проекте</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ВКЛАДКА: СЛОВАРЬ -->
+  <section id="slovar" class="page active">
+    <div class="card">
+      <h2>Просмотр словаря</h2>
+      <div class="stroka-filtrov">
+        <select id="filtr-temy"></select>
+        <input id="poisk" type="text" placeholder="Поиск по слову или переводу...">
+      </div>
+      <div id="schetchik" class="schetchik"></div>
+      <div class="tablica-obertka">
+        <table class="tablica">
+          <thead><tr><th>№</th><th>Немецкое слово</th><th>Перевод</th><th>Тема</th><th>Действия</th></tr></thead>
+          <tbody id="telo-tablicy"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА: ТЕСТ -->
+  <section id="test" class="page">
+    <div class="card">
+      <h2>Проверка знаний</h2>
+      <div id="test-nastrojki">
+        <div class="stroka-filtrov">
+          <select id="test-rezhim">
+            <option value="de-ru">Немецкий → русский</option>
+            <option value="ru-de">Русский → немецкий</option>
+            <option value="artikli">Артикли der / die / das</option>
+          </select>
+          <select id="test-temy"></select>
+          <input id="test-kol" type="number" value="10" min="1" max="50">
+        </div>
+        <p class="podskazka">Последнее поле — количество вопросов. Вопросы выбирает Python функцией random.sample().</p>
+        <button id="knopka-start" class="btn">Начать тест</button>
+      </div>
+
+      <div id="test-ekran" class="skryto">
+        <div id="test-progress" class="progress-text"></div>
+        <div class="polosa"><div id="test-polosa"></div></div>
+        <div id="test-vopros" class="vopros"></div>
+        <div id="blok-vvod" class="stroka-filtrov">
+          <input id="test-otvet" type="text" placeholder="Введи ответ и нажми Enter">
+          <button id="knopka-otvet" class="btn">Ответить</button>
+        </div>
+        <div id="blok-artikli" class="stroka-filtrov skryto">
+          <button class="btn art" onclick="otvetit('der')">der</button>
+          <button class="btn art" onclick="otvetit('die')">die</button>
+          <button class="btn art" onclick="otvetit('das')">das</button>
+        </div>
+        <div id="test-otvet-status" class="status"></div>
+        <button id="knopka-dalshe" class="btn skryto">Дальше →</button>
+      </div>
+
+      <div id="test-itog" class="skryto"></div>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА: ДОБАВИТЬ -->
+  <section id="dobavit" class="page">
+    <div class="card">
+      <h2>Добавить своё слово</h2>
+      <label>Немецкое слово</label>
+      <input id="nov-slovo" type="text" placeholder="например: der Hund">
+      <label>Перевод</label>
+      <input id="nov-perevod" type="text" placeholder="например: собака">
+      <label>Тема</label>
+      <select id="nov-temy"></select>
+      <label>Или своя новая тема (необязательно)</label>
+      <input id="nov-svoya" type="text" placeholder="например: Урок 5">
+      <p class="podskazka">Python сам приведёт слово к единому виду: .strip() и .lower().</p>
+      <button id="knopka-dobavit" class="btn">Добавить в словарь</button>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА: СТАТИСТИКА -->
+  <section id="stat" class="page">
+    <div class="card">
+      <h2>Статистика словаря</h2>
+      <div id="stat-bloki" class="setka-stat"></div>
+      <h3>Слов по темам</h3>
+      <div id="stat-temy"></div>
+      <p id="stat-dubli" class="podskazka"></p>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА: ДАННЫЕ -->
+  <section id="dannye" class="page">
+    <div class="card">
+      <h2>Сохранение и загрузка</h2>
+      <p id="dannye-info" class="podskazka"></p>
+      <p>Словарь хранится в памяти браузера (localStorage), поэтому твои слова не пропадут после закрытия страницы. Файлы CSV и TXT формирует Python.</p>
+      <button id="knopka-csv" class="btn">⬇ Скачать CSV (Excel)</button>
+      <button id="knopka-txt" class="btn">⬇ Скачать TXT (слово|перевод|тема)</button>
+      <h3>Загрузить словарь из TXT-файла</h3>
+      <input id="fayl-txt" type="file" accept=".txt">
+      <h3>Сброс</h3>
+      <button id="knopka-sbros" class="btn opasno">Вернуть базовый словарь</button>
+    </div>
+  </section>
+
+  <!-- ВКЛАДКА: О ПРОЕКТЕ -->
+  <section id="o-proekte" class="page">
+    <div class="card">
+      <h2>О проекте</h2>
+      <p><b>«Немецкий словарик»</b> — учебный проект по курсу «Основы программирования».
+      Вся логика написана на <b>Python</b> (файл <code>slovarik.py</code>) и выполняется
+      прямо в браузере через <b>Pyodide</b> — интерпретатор Python на WebAssembly.
+      JavaScript отвечает только за отрисовку интерфейса.</p>
+      <h3>Функции программы</h3>
+      <ul>
+        <li>Просмотр словаря, фильтр по 13 темам, поиск по части слова</li>
+        <li>Мини-тест: немецкий → русский и русский → немецкий</li>
+        <li>Тренажёр артиклей der / die / das</li>
+        <li>Добавление, редактирование, удаление слов</li>
+        <li>Статистика: уникальные слова, повторы, средняя длина слова</li>
+        <li>Экспорт в CSV и TXT, импорт из TXT, автосохранение</li>
+      </ul>
+      <h3>Темы курса и где они в коде Python</h3>
+      <table class="tablica">
+        <tr><th>Тема курса</th><th>Функция в slovarik.py</th></tr>
+        <tr><td>Ввод и вывод данных</td><td>input() / print() в консольном меню, обмен данными с сайтом</td></tr>
+        <tr><td>Числовые данные</td><td>api_itog(): процент, round(), счётчики</td></tr>
+        <tr><td>Текстовые данные</td><td>api_import(): разбор строк по разделителю |</td></tr>
+        <tr><td>Условный оператор</td><td>proverit(), otsenka(), проверки в api_dobavit()</td></tr>
+        <tr><td>Циклы</td><td>for / while, break, continue во всех разделах</td></tr>
+        <tr><td>Множества</td><td>spisok_tem(), api_statistika(): set(), .add(), in</td></tr>
+        <tr><td>Строки и символы</td><td>norm(), est_artikul(), срезы [4:] и [:3]</td></tr>
+        <tr><td>Списки</td><td>slovar — список списков, append(), pop(), clear()</td></tr>
+        <tr><td>Библиотеки и функции</td><td>random, json, csv, os; 35 функций def с return</td></tr>
+        <tr><td>Табличные данные</td><td>api_csv() и export_csv(): таблица с разделителем ;</td></tr>
+      </table>
+      <p class="podskazka">Тот же файл работает и в консоли: <code>python slovarik.py</code> — откроется текстовое меню из 13 пунктов.</p>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+<footer>
+  Учебный проект · «Немецкий словарик» · GitHub Pages<br>
+  <span id="python-versiya" class="python-badge"></span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
